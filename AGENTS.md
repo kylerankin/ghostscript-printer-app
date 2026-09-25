@@ -4,7 +4,8 @@
 
 ### Issue tracker
 
-Bluefin OCI issues and PRDs live in [GitHub Issues](https://github.com/projectbluefin/ghostscript-printer-app/issues), not `.scratch/` or upstream OpenPrinting. See `docs/agents/issue-tracker.md`.
+Issues and PRDs live as GitHub Issues on this repository. See
+`docs/agents/issue-tracker.md`.
 
 ### Triage labels
 
