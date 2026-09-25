@@ -116,20 +116,27 @@ jobs:
         if: env.FULL_BUILD == 'true'
         run: just verify
 
-  build-snap:
-    if: github.event_name == 'workflow_dispatch'
+  # The Snap package (snap/snapcraft.yaml) is a separate, independently
+  # maintained artifact and not a product of this repository's CI. Its build
+  # must not live in this gate, whose sole job is to verify the FSDK OCI
+  # container contract. A flaky non-OCI build here would either obscure the
+  # FSDK results or force a container-only promotion to be blocked for an
+  # unrelated packaging reason. Keep the real-image gate above strict: any
+  # failed FSDK job fails the gate.
+  actionlint:
+    name: Workflow lint
     runs-on: ubuntu-24.04
     permissions:
       contents: read
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-      - name: Build Snap package
-        id: snapcraft
-        continue-on-error: true
-        uses: snapcore/action-build@3bdaa03e1ba6bf59a65f84a751d943d549a54e79 # v1
-      - name: Retry Snap build after transient failure
-        if: steps.snapcraft.outcome == 'failure'
-        uses: snapcore/action-build@3bdaa03e1ba6bf59a65f84a751d943d549a54e79 # v1
+      - name: Install actionlint v1.7.12
+        run: |
+          curl -fsSL -o actionlint.tar.gz \
+            https://github.com/rhysd/actionlint/releases/download/v1.7.12/actionlint_1.7.12_linux_amd64.tar.gz
+          echo "8aca8db96f1b94770f1b0d72b6dddcb1ebb8123cb3712530b08cc387b349a3d8  actionlint.tar.gz" | sha256sum -c
+          tar -xzf actionlint.tar.gz actionlint
+      - name: Run actionlint
+        run: ./actionlint -color
