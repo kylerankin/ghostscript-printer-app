@@ -102,9 +102,10 @@ verify-ghostscript-romfs:
 verify-cups-patch-chain:
     tests/cups-patch-chain.sh
 
-# Default (no-PORT) PAPPL ephemeral-port coexistence (issue #17, "Default port
-# and coexistence case"): PR #57 only exercised explicit ports. Host Avahi +
-# multicast; opt-in, not part of `just verify`.
+# Default (no-PORT) port coexistence (issue #17, "Default port and coexistence
+# case"): PAPPL's default listener starts at 7999 + UID % 1000 (8532 for 65532)
+# and steps to the next free port; PR #57 only exercised explicit ports. Host
+# Avahi + multicast; opt-in, not part of `just verify`.
 verify-discovery-default-port:
     tests/discovery-default-port.sh
 
