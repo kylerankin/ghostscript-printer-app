@@ -24,26 +24,33 @@ state_other="$(mktemp -d)"
 chmod 0777 "$state_a" "$state_b" "$state_other"
 
 output_file="$(mktemp)"
+output_file_b="$(mktemp)"
 sink_pid=""
+sink_pid_b=""
 
 cleanup() {
   for name in gs-a gs-b probe; do
     podman rm -f "$name" >/dev/null 2>&1 || true
   done
-  if [[ -n "$sink_pid" ]]; then
-    kill "$sink_pid" >/dev/null 2>&1 || true
-    wait "$sink_pid" 2>/dev/null || true
-  fi
+  for pid in "$sink_pid" "$sink_pid_b"; do
+    if [[ -n "$pid" ]]; then
+      kill "$pid" >/dev/null 2>&1 || true
+      wait "$pid" 2>/dev/null || true
+    fi
+  done
   podman unshare rm -rf "$state_a" "$state_b" "$state_other" 2>/dev/null || true
-  rm -f "$output_file"
+  rm -f "$output_file" "$output_file_b"
 }
 trap cleanup EXIT
 
 just build
 
-# Synthetic backend target: print jobs route here; no real hardware.
+# Synthetic backend targets: print jobs route here; no real hardware. Each
+# instance gets its own sink, so each synthetic printer has one owner.
 python3 tests/socket-sink.py "$((18060))" "$output_file" &
 sink_pid=$!
+python3 tests/socket-sink.py "$((18061))" "$output_file_b" &
+sink_pid_b=$!
 
 # --- helpers -------------------------------------------------------------
 
@@ -78,7 +85,7 @@ count_advertisements() { # observer queue
   local observer="$1" queue="$2"
   podman exec "$observer" /usr/bin/bash -c '
     set -euo pipefail
-    avahi-browse --parsable --resolve --terminate _ipp._tcp 2>/dev/null \
+    timeout 60 avahi-browse --parsable --resolve --terminate _ipp._tcp 2>/dev/null \
       | while IFS=";" read -r tag _ _ name rest; do
           if [[ "$tag" == "=" && "$name" == *"$1"* ]]; then
             echo "$name"
@@ -104,6 +111,24 @@ wait_count() { # observer queue expected
   printf 'FAIL: expected %s advertisement for %s, observed %s\n' "$expected" "$queue" "$count" >&2
   podman logs "$observer" >&2 || true
   return 1
+}
+
+# wait_count passes on the first matching poll, which can precede a late
+# duplicate advertisement; require the count to hold for 10 polls 3s apart.
+wait_settled() { # observer queue expected
+  local observer="$1" queue="$2" expected="$3"
+  local names count
+  wait_count "$observer" "$queue" "$expected" >/dev/null
+  for _ in $(seq 1 10); do
+    sleep 3
+    names="$(count_advertisements "$observer" "$queue" || true)"
+    count="$(grep -c . <<<"$names" || true)"
+    [[ -z "$names" ]] && count=0
+    if [[ "$count" -ne "$expected" ]]; then
+      printf 'FAIL: %s advertisement(s) for %s seen from %s after settling\n' "$count" "$queue" "$observer" >&2
+      return 1
+    fi
+  done
 }
 
 # --- instance A: default (no PORT) port ----------------------------------
@@ -132,10 +157,17 @@ printf 'OK: gs-a state and single advertisement persist across restart (default 
 podman run -d --name gs-b --network host \
   -v "$state_b:/var/lib/ghostscript-printer-app:Z" "$image" >/dev/null
 port_b="$(discover_port gs-b "$port_a")" || { printf 'FAIL: no port discovered for gs-b\n'; exit 1; }
-add_printer gs-b "$port_b" discovery-default-b "$((18060))"
+# discover_port skips A's port, so a collision surfaces as "no port
+# discovered for gs-b" above.
+add_printer gs-b "$port_b" discovery-default-b "$((18061))"
 wait_count gs-b discovery-default-b 1
-[[ "$port_b" != "$port_a" ]] || { printf 'FAIL: default ports collide: %s\n' "$port_a"; exit 1; }
 printf 'OK: second no-PORT Ghostscript steps to distinct port (%s)\n' "$port_b"
+
+# Cross-check from the other instance: each queue must stay advertised once
+# host-wide, so B republishing A's printer (or the reverse) fails here.
+wait_settled gs-b discovery-default-a 1
+wait_settled gs-a discovery-default-b 1
+printf 'OK: each queue stays advertised once when observed from the other instance\n'
 
 printf 'NOTE: real USB interface claiming and GNOME print dialog behavior are unverified here; both require physical hardware and a desktop session.\n'
 printf 'OK: default-port Ghostscript discovery does not compete for one synthetic printer\n'
