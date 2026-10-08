@@ -1,6 +1,6 @@
 # BLUEFIN DIRECTION
 
-This will be a projectbluefin/fsdk-container designed to bring this to all Linuxes. It will be deployed by a quadlet. 
+This will be a projectbluefin/fsdk-container designed to bring this to all Linuxes. It will be deployed by a quadlet.
 - Bluefin will ship this first
 - Many of the things in these containers are old school, modernize and bring it to fsdk specs, distroless. Slim and mean.
 
