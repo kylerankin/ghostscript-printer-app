@@ -4,7 +4,7 @@
 
 Every change is gated by CI plus a pre-commit hygiene pass:
 
-- **`validate`** (`.github/workflows/validate.yml`): runs `pre-commit run --all-files` on `pull_request` and `merge_group`. Runs `actionlint`, YAML/JSON/toml hygiene, and blocks floating GitHub Action tags — third-party actions must be pinned to a full SHA (`no-floating-action-tags`). This check is required in the `main` ruleset.
+- **`validate`** (`.github/workflows/validate.yml`): runs `pre-commit run --all-files` on `pull_request` and `merge_group`. Runs `actionlint`, YAML/JSON/toml hygiene, and blocks floating GitHub Action tags — third-party actions must be pinned to a full SHA (`no-floating-action-tags`). Add it as a required status check in the `main` merge-queue ruleset as part of the branch-cutover Settings step — the ruleset currently has no required checks.
 - **Scorecard** (`.github/workflows/scorecard.yml`): OpenSSF Scorecard supply-chain check.
 - **CI** (`.github/workflows/ci.yml`): FSDK appliance build and snap.
 - **`.pre-commit-config.yaml`**: the checks above. Run `pre-commit run --all-files` before every commit.
