@@ -53,9 +53,15 @@ bst *ARGS:
 validate:
     just verify-rootless-usb
     just verify-entrypoint-validation
+    tests/seed-printing-base.sh
     python3 tests/snap-parity-matrix.py
     PYTHONDONTWRITEBYTECODE=1 python3 tests/renovate.py
     just bst show --deps all oci/ghostscript-printer-app.bst
+
+# Never fails: falls back to building the base locally (see ci/seed-printing-base.sh).
+# Seed the BuildStream cache with the cosign-verified printing base for ARCH.
+seed-printing-base ARCH:
+    ARCH={{ ARCH }} ci/seed-printing-base.sh
 
 fetch:
     #!/usr/bin/env bash
@@ -110,6 +116,11 @@ verify-stateful-drivers:
 verify-ghostscript-romfs:
     tests/ghostscript-romfs.sh
 
+# The driver auto-add picks from an IEEE-1284 device ID: model-specific PPD
+# first, then the Generic PostScript, PCL XL, PCL 5c and PCL 5e fallbacks.
+verify-driver-autoselect:
+    tests/driver-autoselect.sh
+
 verify-cups-patch-chain:
     tests/cups-patch-chain.sh
 
@@ -161,6 +172,7 @@ verify:
     just verify-raster-drivers
     just verify-packaged-drivers
     just verify-stateful-drivers
+    just verify-driver-autoselect
     tests/appliance-parity.sh
     just verify-no-devel
 
