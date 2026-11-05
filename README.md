@@ -471,7 +471,8 @@ and pappl-retrofit come from the shared printing base of
 `elements/fsdk-containers.bst`; FSDK itself comes through that junction. CI
 seeds the base from its cosign-verified `printing-base-devel` bundle, and
 Renovate ([`renovate.json`](renovate.json)) proposes and automerges junction
-bumps to fsdk-containers `main` once the merge queue's full gate passes.
+bumps to fsdk-containers `main`; with the merge queue off, the full native
+build and `just verify` then run on `main` and gate publication.
 
 For real hardware, follow the separate
 [USB and network printer validation procedure](docs/oci-physical-validation.md).
@@ -480,16 +481,17 @@ Synthetic CI results are not physical-printer evidence.
 For driver and version differences against the current OpenPrinting Snap,
 see the [Snap parity matrix](docs/snap-parity-matrix.md).
 
-Merge-queue CI and the publish workflow restore BuildStream's local cache (`cas`, `artifacts`,
+CI on `main` and the publish workflow restore BuildStream's local cache (`cas`, `artifacts`,
 `source_protos`) from the Actions cache. The `BuildStream cache refill` workflow
 rebuilds and saves it per architecture on `main` pushes and nightly (saved only when an arch fits in 9000 MB uncompressed; a larger cache skips the save with a warning and the run stays green); reset it with `gh cache delete --all`.
 
 ### Development and releases
 
 Open OCI development PRs against `main`; Renovate's fsdk-containers bumps land
-there too. Pull requests run `just validate`, and the merge queue runs the full
-native amd64 and arm64 build and `just verify` before a change lands on
-`main`. `just validate` also runs the Python unit tests in `tests/`; the
+there too. Pull requests run `just validate`. The merge queue is off, so a
+change reaches `main` when its pull request is merged; the full native amd64
+and arm64 build and `just verify` then run on `main`, where they gate what is
+published. `just validate` also runs the Python unit tests in `tests/`; the
 install-pin gate needs PyYAML (`pip install -r .github/requirements-ci.txt`).
 
 Every push to `main` publishes: `registry-actions.yml` rebuilds and verifies
