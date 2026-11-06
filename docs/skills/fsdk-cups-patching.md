@@ -95,7 +95,7 @@ CUPS, cups-filters, libcupsfilters, libppd, Ghostscript, mutool, the nonroot `av
 
 ## Ghostscript ROMFS regression gate
 
-`just verify-ghostscript-romfs` is part of `just verify`, so the merge queue runs
+`just verify-ghostscript-romfs` is part of `just verify`, so the `main` publish run executes
 it on both native architectures for every change, including each
 Renovate fsdk-containers bump. Ghostscript's bundled zlib is set by
 fsdk-containers' printing patch; run `just verify-cups-patch-chain` first when

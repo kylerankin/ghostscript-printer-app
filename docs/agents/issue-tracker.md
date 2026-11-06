@@ -25,8 +25,8 @@ second copy of a ticket in `.scratch/`.
 
 - **Submit contributor PRs to `main`.** This is the active development
   branch and the repository default.
-- **Landing on `main` publishes.** After the merge queue's full native
-  gate, `registry-actions.yml` rebuilds and re-verifies both architectures,
+- **Landing on `main` publishes.** On every push to `main`,
+  `registry-actions.yml` rebuilds and re-verifies both architectures,
   then publishes a GHCR multi-architecture index with keyless signature, SPDX
   SBOM, provenance, and verified OCI referrers, tagged immutable
   `sha-<commit>` and moving `<VERSION>` and `stable`. There is no promotion
@@ -37,8 +37,9 @@ second copy of a ticket in `.scratch/`.
 
 Real-image behavior, not synthetic mock echoes, proves shipping behavior:
 
-- Pull requests run `just validate`; the merge queue runs the full native
-  build and `just verify` before a change lands on `main`.
+- Pull requests run `just validate`; the merge queue is off, so the full
+  native build and `just verify` run on `main` after a change lands and gate
+  publication.
 - `just verify` is the authoritative appliance gate: it validates the
   BuildStream graph and CUPS patch chain, starts the **real** OCI image,
   exercises every driver slice, verifies lifecycle and persistence, audits the

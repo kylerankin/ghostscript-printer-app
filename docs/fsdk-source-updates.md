@@ -24,8 +24,9 @@ including one that moves FSDK's Ghostscript:
   `elements/freedesktop-sdk.bst` at the pinned fsdk-containers commit and stamps
   them as the `io.projectbluefin.fsdk.*` labels and index annotations.
 
-Renovate automerges the PR once the merge queue's full native amd64 and arm64
-build and `just verify` pass; the push to `main` then publishes it. Reverting
+Renovate automerges the PR once `just validate` passes (the merge queue is
+off); the push to `main` then runs the full native amd64 and arm64 build and
+`just verify`, and publishes only if they pass. Reverting
 the PR is the rollback. Hosted Renovate cannot run repository scripts, so the
 bump must stay a complete, buildable change on its own.
 

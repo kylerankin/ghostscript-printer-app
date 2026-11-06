@@ -46,7 +46,7 @@
       "allowedVersions": "/^24\\.04(?:-arm)?$/"
     },
     {
-      "description": "Land fsdk-containers bumps as soon as the merge queue's full native build and just verify pass; every main push publishes, so reverting the PR is the rollback",
+      "description": "Land fsdk-containers bumps as soon as just validate passes (the merge queue is off); the full native build and just verify then run on main and gate publication, so reverting the PR is the rollback",
       "matchDepNames": [
         "https://github.com/projectbluefin/fsdk-containers"
       ],
